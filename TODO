@@ -9,3 +9,5 @@ CURRENT BUGS / issues :
   Thus, we need the hybrid Arduino / Linux solution vs a compact one
 
 4) Receivercallback will wait until it finishes each task before opening the next message 
+
+5) Will compile on archlinux fine, but will not compile on *Buntu
