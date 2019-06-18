@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html lang = "en">
+    
+    <head>
+        
+        <meta charset = "utf-8" />
+        <title> PORTAL PASS </title>
+        
+    </head>
+    
+    <body>
+        
+        <script src = "AgoraRTCSDK-2.4.0.js"></script>
+        <script src = "channelInfo.js"></script>
+        <script src = "commHandler.js"></script>
+        
+        <div>
+            <div id="remote_stream"></div>
+        </div>
+        
+        <div>
+            <div id="local_stream"></div>
+        </div>
+        
+        <script>
+          
+            var API = new commHandler( );
+            API.joinVideoCall( ChannelName, Password )
+            
+        </script>
+        
+    </body>
+
+</html>

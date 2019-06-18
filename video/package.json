@@ -1,0 +1,7 @@
+{
+    "main": "agora.html",
+    "name": "agora-demo",
+    "window": {
+	"show": false
+	}
+}

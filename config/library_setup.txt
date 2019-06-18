@@ -1,0 +1,85 @@
+You can run PORTAL_PASS_TEST/./install.sh, which should go from a clean
+archlinux install to one that is ready to run portalpass test
+
+Before running the script, you need to have the libagorasig.so file
+in lib, and you will need to have an appropriate setup.txt
+
+It will manage installing all packages, enabling services, adding yourself
+to groups, etc
+
+Edit "/etc/X11/Xwrapper.config" and insert "allowed_users=anybody"
+Move "PORTAL_PASS_TEST/config/xorg.conf" to "/etc/X11/xorg.conf"
+Move "PORTAL_PASS_TEST/config/xinitrc" to "~/.xinitrc"
+
+Note.... You need special group access to use the serial port as a non root user
+         run 
+         ls -l /dev/ttyACM*  to see what group owns it
+         ( usually dialout or uucp )
+         sudo usermod -aG <groupname> <username>
+         
+         You also need special group access to use the video stream 
+         ls -l /dev/video*
+         (usually video)
+
+        sudo usermod -aG <group name> <username>
+
+        and audio
+
+        sudo usermod -aG audio $USER
+
+In a VM: use virtualbox to pass the webcam and arduino to the VM
+         Install virtualbox guest utils, in arch
+         sudo pacman -S virtualbox-guest-utils-nox && sudo systemctl start vboxservice
+               && sudo systemctl enable vboxservice
+
+then, sudo pacman -Syu && sudo pacman -S multilib-devel
+
+Library: Xorg
+Install: sudo pacman -S xorg-server xorg-xinit
+	 Needed to make virtual X windows which nwjs needs to make calls
+
+Library: (AUR) nwjs-bin
+Install: mkdir ~/AUR && cd AUR && git clone https://aur.archlinux.org/nwjs-bin.git && cd nwjs-bin && makepkg -si
+Notes:   Allows us to use Agora Video Calling API written in javascript on Linux.
+	 Insert the content of "PORTAL_PASS_TEST/config/xinitrc.txt" into "~/.xinitrc"
+
+Library: xf86-video-dummy
+Install: sudo pacman -S xf86-video-dummy
+Notes:   Needed for running an Xorg application from c++
+	 
+Library: cronie
+Install: sudo paman -S cronie
+	 Needed to make cron jobs to run things on boot
+	 CRON JOBS NEEDED:
+	 @reboot 
+	 @reboot
+
+Library: alsa-utils
+Install: sudo pacman -S alsa-utils
+	 Allows audio input and output toggling on arch
+
+Library: python-pyzmq
+Install: sudo pacman -S python-pyzmq
+         Allows interprocess communication between python and python, and python and c++
+
+Library: python-qrcode
+Install: sudo pacman -S python-qrcode
+Usage:   qr <random number>
+            encodes <random number> as a png
+
+Library: python-bcrypt
+Install: sudo pacman -S python-bcypt
+Used for hashing / salting of QR codes and passwords
+
+Library: zbar
+Install: sudo pacman -S zbar
+Usage:   zbarimg <filename of qr code>
+            outputs data stored in QR
+         zbarcam -v --nodisplay --prescale=640x480 | parseqr_ins.py
+            scans video stream, returns data stored in QR found in videostream
+*There is a python2-zbar module but not a python-zbar module
+*We should decide to use zbar through bash or find compatibility with the python 2 package?
+
+Library: pyserial
+Install: sudo pacman -S python-pyserial
+         Used interact with arduino over serial port to send/recieve commands

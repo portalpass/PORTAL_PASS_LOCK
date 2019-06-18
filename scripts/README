@@ -1,0 +1,83 @@
+Documentation for Locking and Unlocking functions:
+
+Interprocess communication is currently done the ZMQ Library
+
+lockControl.py:
+    daemon process to manage the serial port and I/O with the arduino
+    Can react to:
+        -spontaneous messages from the arduino (IE DOORBELL)
+            and send it to paired devices using lockSender
+        -from messages from lockReceiver ( ie Requesting an unlock )
+        -from verification signals from verify_QR.py
+
+    Technical Details:
+    TERMINATING_CHAR 'X'
+    CLEAR_CHAR       '*'
+
+    Messgaes to Arduino:
+    "unl" + TERMINATING_CHAR  - unlock
+    "loc" + TERMINATING_CHAR  - lock
+    "?ds" + TERMINATING_CHAR  - Query Door State
+    "?ls" + TERMINATING_CHAR  - Query Lock State
+    "hl1" + TERMINATING_CHAR  - Turn LED High
+    "ll1" + TERMINATING_CHAR  - Turn LED Low
+    "?l1" + TERMINATING_CHAR  - Query LED
+    "sT"  + <lockout_time in ms) + TERMINATING_CHAR - set lockout time to lockout_time
+    "?lT" + TERMINATING_CHAR  - Query Lockout time
+
+    Responses from Arduino - Will have "REPLY:" or "SPONT:" header
+    if it came from a command or on its own respectively
+    Will either be forwarded back to lockReceiver via ZMQ or be sent by lockSender
+
+    "STALE:(0|1)" - status of LED   (0|1) (off    |on      )
+    "STATD:(0|1)" - status of door  (0|1) (closed |open    )
+    "STATL:(0|1)" - status of lock  (0|1) (lockaed|unlocked)
+    "VIDREQ"      - request video
+    "ERRDRO"      - ERROR door is open (cannot lock/unlock)
+    "AUTTO:<ms>"  - lockout time in ms.
+
+QR Functions:
+    i)   Phone requests QR code with conditions [conditions]
+    ii)  Generate a large random number, and use library to turn into PNG
+    iii) Encode and send PNG to phone
+    iv)  Hash number, and store it and conditions in qr.txt
+    v)   have a daemon listen for QR codes, and when it finds one, check against
+         qr.txt
+
+scanQR.sh runs as a daemon, listening to QR codes via Zbar. If it sees a
+QR code, it well check it against the database.
+If it is good, it will use ZMQ to signal lockControl.py and unlock should be done
+
+generate_QR.py runs on demand and should be called with 6 conditions which are the arguments
+It will make a random QR code, and store it in the database with the appropriate conditions
+It will print the QR png in base64 to be captured by C++'s popen
+
+Conditions Format:
+6, space seperated conditions
+
+    Conditions = [start date, end date, start time 	
+    (hour-minute), end (hour-minute), days of Week (7-bit binary, Sunday to Saturday), 	
+    uses ]
+    
+    Example: Valid May 1 to June 20, from 12AM to 1:15pm on Weekdays.
+    No limit on scans within that range
+    % generate_QR.py 2019-5-1 2019-6-20 00-00 13-15 0111110 -1
+
+Conditions Format:
+
+    Start date and End Date:
+        year-month-day string arguments, separated by ‘-’.
+
+    Start time and End Time:
+        hour-minute string arguments, separated by ‘-’. 24 hour time. 
+
+    Days of Week:
+        7-bit binary string. Each bit represents a day of the week, the MSB
+        is Sunday; the LSB is Saturday. 1 is an authorized day and 0 is an unauthorized 
+        day.
+
+    Uses 
+        Integer, how many times the QR code can be scanned before it is invalide
+        -1 allows infinite scans
+
+Will work in between start date and end date between hours start time and end time. All arguments are strings. 

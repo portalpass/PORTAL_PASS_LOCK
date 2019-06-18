@@ -1,0 +1,110 @@
+Documentation for c++ programs:
+
+This family of programs is made to interface with the AGORA C++ Signalling 
+API to send and receiver messages to and from their servers.
+
+ALL MESSAGE FORMAT:
+    BYTE 1: 'A'/'R'/'S' (did the message come from Android, Receiver, or Sender)
+                        ( If it came from S, switch the first 16 bytes with the second 16 of the serial
+                          to get the key it used and to reply to it )
+
+    BYTE 2: 'E'/'U'     (is this message encrypted or not)
+    
+    REMAINDER:          Unencrypted Message / Public Key / Base64 encoded Encrypted + Signed message
+
+setup.txt: (put in ~/.config/PORTAL_PASS)
+    Contains APPID=xxxxxxx    (32 character APPID)
+             SERIAL=xxxxxxx   (32 character serial, MUST NOT CONTAIN ':' or '#')
+
+    *The receiver will send/receive using the 32 character SERIAL
+    *The sender will send using the SERIAL with its first 16 chars swapped with the second 16 chars
+    *Both the receiver and sender will use the key stored ~/.config/PORTAL_PASS_TEST/SERIAL.pub.pem and (...).priv.pem
+
+lockReceiver:
+    Runs as a daemon constantly listening for messages
+    Asynchronously will call functions from "receiverCallBack"
+
+receiverCallBack:
+    
+    Contains the asynchronous functions for the receiver
+    This will allow it to parse a message and then take an action 
+
+        Will reply using the receiver's serial to the sender's # 
+
+    Connects to the lock through the python script "scripts/arduino_test.py", which manages connection to 
+    Arduino. All requests to the Arduino require that script to be running
+    Inter-process communication is doen using the "ZMQ" library
+
+    Use BYTE1: to determine if it can use the SENDERS Serial as is for key & reply ( 'R'/'A' )
+               or if it must flip the 1st and second 16 bytes                      (   'S'   )
+
+    USE BYTE2: to determine if unencrypted message / RSA KEY  ( 'U' )
+               or if it is encrypted and signed               ( 'E' )
+
+        -If Unencrypted, checks if message is an RSA PUBLICK KEY
+        If so, ask for verification, IMPORT & Send back PUBLIC KEY & store them in paired_serials.txt
+        If not, print and return
+
+        -If encrypted, decode from base64, decrypt & verify signature with senders key
+           	NESTED INSIDE THE DECRYPTED MESSAGE IS A 6 BYTE HEADER TO TAKE ACTION
+            "UNLOCK"    - send unlock request to ZMQ and reply back
+            "LOCK!!"    - send lock request to ZMQ and reply back
+            "DOORS?"    - request door state from ZMQ and reply back
+            "LOCKS?"    - request lock state from ZMQ and reply back
+            "GETQR:<>"  - generate a QR code with parameters <> for its validity, then sender it back to the sender
+            "RPLQR:<>"  - assume <> is a BASE64 ENCODED QR PNG and store it
+            "SETTI:<ms>"- Set lock timeout in MS
+            "LOCTO?"    - Query lock Timeout
+
+            "VIDBEG:<chn>:<pass>"    - run startx and terminate zbarcam, to stop QR detection 
+                                       and begin video/audio streaming. Open with channel <chn> 
+                                       and as password <pass>
+            "VIDEND"                 - run zbarcam and terminate nw, to stop video/audio streaming 
+                                       and begin QR detection
+            "VIDDEC"                 - performs nothing atm, in case video request was declined
+
+            TESTING PURPOSES:
+            "SETLED"  - turn LED on
+            "LOWLED"  - turn LED off
+            "QUERYL"  - ask the status of the LED and have it send back
+
+            RESPONSES FROM ARDUINO (to be forwarded to android)
+            "STALE:(0|1)" - status of LED   (0|1) (off   |on      )
+            "STATD:(0|1)" - status of door  (0|1) (closed|open    )
+            "STATL:(0|1)" - status of lock  (0|1) (locked|unlocked)
+            "VIDREQ"      - request video
+            "ERRDRO"      - ERROR door is open (cannot lock/unlock)
+            "AUTTO:<ms>"  - respond with lock timeout time to a "SETTI:" or a "LOCTO?"
+
+lockSender:
+    Runs as a "spontaneous sender", allows the lock to send messages on its
+    own rather than just a reply.
+    
+    Send & encrypt to all targets in "paired_serials.txt"
+        lockSender <encrypted message> 
+        You may comment ID's by using '#' on the first character of the line
+        it appears on
+
+    Send your public key to someone:
+        lockSender <TARGET_SERIAL> send_pub_key
+
+    Logs in flipping the first and second 16 bytes in setup.txt
+    Will encrypt for receiver ID, and Sign with Serial automatically
+    Encode to base64, preppend 2 header bytes, then send
+
+    If the video doorbell is Asynchronously pressed on the lock,
+    Will send a message to all paired devices "VIDREQ"
+
+
+
+senderCallBack:
+    asynchronous functions for sender
+
+lockAPI: 
+    additional functions dealing with agora
+
+helper_functions:
+    extra
+
+TODO:
+    Integrate with openssl c++ libraries 
