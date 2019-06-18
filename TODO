@@ -1,0 +1,11 @@
+CURRENT BUGS / issues :
+
+1) Video currently does not read the serial # in setup.txt
+
+2) When run in a virtual machine, Zbar will sometimes spontaneously crash
+
+3) Agora's binary is 64 bit, requiring us to use a 64 bit linux, but 
+  Raspi video driviers are only available in 32-bit
+  Thus, we need the hybrid Arduino / Linux solution vs a compact one
+
+4) Receivercallback will wait until it finishes each task before opening the next message 
