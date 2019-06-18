@@ -1,6 +1,6 @@
 Portal Pass
 
-This is our test repository for the 'lock' code of Portal Pass
+This is our repository for the 'lock' code of Portal Pass
 
 It pairs with an android app to provice remote control to your home,
 generate QR code guest keys and do video calling / surveillence.
@@ -24,10 +24,10 @@ Openssl keys
 
 Each Subfolder with significant code will have its own README to describe the API and functionality
 
-src/     is primarily c++ code to do encryption & signalling
-video/   is primarily javascript to do video calling
-script/  has sub folders qr_scripts/ and lockControl/ which 
-         gen & valid QR and manage the arduino respectively
+signalling/  is primarily c++ code to do encryption & signalling
+video/       is primarily javascript to do video calling
+script/      has sub folders qr_scripts/ and lockControl/ which 
+             gen & valid QR and manage the arduino respectively
 
 UNLOCK CONDTIONS:
 1) Android Presses Unlock
@@ -40,8 +40,9 @@ INSTALLATION:
 
 Steps:
 
-1) Make a virtual Machine with archlinux and do a clean, minimal install
+1) Make a virtual Machine with ArchLinux and do a clean, minimal install
 https://wiki.archlinux.org/index.php/Installation_guide
+***Currently does not work on Ubuntu, but we will debug
 
 2) Make a non-root user with admin privledges (put them in group wheel, and use visudo, etc)
 
