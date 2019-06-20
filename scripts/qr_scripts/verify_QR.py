@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# Use webcam to scan for QR-Code
+# Once QR-Code is scanned, QRID is hashed and compared to elements in qr.txt
+# If hash of QRID exists, and conditions are met, send unlock signal 
+
 import QR_functions as QRF
 import sys
 import time

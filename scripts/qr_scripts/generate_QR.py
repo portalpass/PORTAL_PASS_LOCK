@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# Takes in list of conditions and creates a 6 element list
+# Generates a QRID using random numebr generator
+# Logs hashed QRID and list of conditions into the database qr.txt 
+
 import QR_functions as QRF
 import sys
 
